@@ -17,19 +17,70 @@ import { createStore } from "mipd";
 import { Label } from "~/components/ui/label";
 import { PROJECT_TITLE } from "~/lib/constants";
 
-function ExampleCard() {
+function GMActions({ context }: { context: Context.FrameContext | undefined }) {
+  const [gmSent, setGmSent] = useState(false);
+  const [following, setFollowing] = useState(false);
+
+  const handleSendGM = useCallback(async () => {
+    try {
+      if (!context?.user.fid) throw new Error("No user FID found");
+      
+      // Send GM to followers
+      await sdk.actions.sendFrameNotification({
+        fid: context.user.fid,
+        title: "GM from FrameForge!",
+        body: `${context.user.displayName} says GM! 👋`,
+      });
+      
+      setGmSent(true);
+    } catch (error) {
+      console.error("Error sending GM:", error);
+    }
+  }, [context]);
+
+  const handleFollow = useCallback(async () => {
+    try {
+      if (!context?.user.fid) throw new Error("No user FID found");
+      
+      // Follow the frame owner (0xcaso)
+      await sdk.actions.followUser({
+        targetFid: 0xcaso, // Replace with actual FID
+      });
+      
+      setFollowing(true);
+    } catch (error) {
+      console.error("Error following:", error);
+    }
+  }, [context]);
+
   return (
     <Card className="border-neutral-200 bg-white">
       <CardHeader>
-        <CardTitle className="text-neutral-900">Welcome to the Frame Template</CardTitle>
+        <CardTitle className="text-neutral-900">GM from FrameForge 👋</CardTitle>
         <CardDescription className="text-neutral-600">
-          This is an example card that you can customize or remove
+          Built by 0xcaso.caso.base.eth
         </CardDescription>
       </CardHeader>
-      <CardContent className="text-neutral-800">
-        <p>
-          Your frame content goes here. The text is intentionally dark to ensure good readability.
-        </p>
+      <CardContent className="flex flex-col gap-4 text-neutral-800">
+        <PurpleButton 
+          onClick={handleSendGM}
+          disabled={gmSent}
+        >
+          {gmSent ? "GM Sent! 🎉" : "Send GM to Followers"}
+        </PurpleButton>
+        
+        <PurpleButton 
+          onClick={handleFollow}
+          disabled={following}
+        >
+          {following ? "Following! ✅" : "Follow 0xcaso"}
+        </PurpleButton>
+        
+        {context?.user && (
+          <div className="text-sm text-neutral-600">
+            Logged in as: {context.user.displayName}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -137,7 +188,7 @@ export default function Frame(
     >
       <div className="w-[300px] mx-auto py-2 px-2">
         <h1 className="text-2xl font-bold text-center mb-4 text-neutral-900">{title}</h1>
-        <ExampleCard />
+        <GMActions context={context} />
       </div>
     </div>
   );
